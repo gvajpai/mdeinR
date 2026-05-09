@@ -6,7 +6,8 @@ Returns a character string with MDE dimension keywords wrapped in XML-style
 annotation tags for qualitative inspection and debugging.
 }
 \usage{
-highlight_mde(text, mde_dt = mdeinR::mde_dictionary, tag_format = "\%s")
+highlight_mde(text, mde_dt = mdeinR::mde_dictionary,
+  tag_format = "<%s>%s</%s>")
 }
 \arguments{
   \item{text}{A single character string (one review).}
