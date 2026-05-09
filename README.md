@@ -1,3 +1,5 @@
+<img src="inst/figures/logo.png" align="right" height="200"/>
+
 # mdeinR
 
 > **Memorable Dining Experience (MDE) text analysis for restaurant reviews**
