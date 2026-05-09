@@ -38,7 +38,8 @@ message("MDE dictionary built:")
 print(table(mde_dictionary$dimension))
 message("Total: ", nrow(mde_dictionary), " tokens")
 
-usethis::use_data(mde_dictionary, overwrite = TRUE)
+if (!dir.exists("data")) dir.create("data")
+save(mde_dictionary, file = "data/mde_dictionary.rda", compress = "bzip2")
 message("mde_dictionary saved to data/mde_dictionary.rda\n")
 
 ## ---- 2. Build valence shifters table ----------------------------------------
@@ -58,5 +59,5 @@ message("Valence shifters built:")
 print(table(valence_shifters$y))
 message("Total: ", nrow(valence_shifters), " tokens")
 
-usethis::use_data(valence_shifters, overwrite = TRUE)
+save(valence_shifters, file = "data/valence_shifters.rda", compress = "bzip2")
 message("valence_shifters saved to data/valence_shifters.rda")
