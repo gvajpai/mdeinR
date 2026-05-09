@@ -158,8 +158,9 @@ update_valence_shifters <- function(
 highlight_mde <- function(
     text,
     mde_dt     = mdeinR::mde_dictionary,
-    tag_format = "<%s>%s</%s>"
+    tag_format = NULL
 ) {
+  if (is.null(tag_format)) tag_format <- "<%s>%s</%s>"
   if (length(text) != 1L || !is.character(text)) {
     stop("`text` must be a single character string.")
   }
