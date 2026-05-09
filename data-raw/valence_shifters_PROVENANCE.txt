@@ -1,0 +1,14 @@
+valence_shifters.csv — Provenance Note
+=======================================
+
+The token lists and integer type-coding scheme (1 = negator, 2 = amplifier,
+3 = de-amplifier, 4 = adversative conjunction) in this file are derived from
+the valence_shifters_table bundled with the sentimentr R package:
+
+  Rinker, T. W. (2021). sentimentr: Calculate text polarity sentiment.
+  University at Buffalo/SUNY. https://github.com/trinker/sentimentr
+
+sentimentr is distributed under the MIT License:
+  Copyright (c) 2017 Tyler Rinker
+
+The full MIT license text and derived-work notices are in LICENSE.md.

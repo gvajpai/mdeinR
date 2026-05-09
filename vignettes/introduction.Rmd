@@ -1,0 +1,165 @@
+---
+title: "Introduction to mdeinR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to mdeinR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>"
+)
+```
+
+## Overview
+
+`mdeinR` scores the five dimensions of a **Memorable Dining Experience
+(MDE)** — *sensory*, *affect*, *behavioral*, *social*, and *intellectual* —
+from free-text restaurant reviews.
+
+The scoring algorithm is inspired by
+[sentimentr](https://github.com/trinker/sentimentr) by Tyler W. Rinker:
+reviews are split into sentences with the built-in `get_sentences()`;
+every MDE keyword is scored as `1 / sentence_word_count`;
+a context window around each keyword is scanned for valence shifters
+(negators, amplifiers, de-amplifiers, adversative conjunctions) from the
+bundled `valence_shifters` table.
+
+The lexicon (324 words) was developed and validated by Vajpai, Webb &
+Beldona (2025).
+
+---
+
+## Installation
+
+```r
+# Install from GitHub
+devtools::install_github("gvajpai/mdeinR")
+```
+
+After cloning or installing, build the data objects once:
+
+```r
+source("data-raw/build_dictionary.R")
+```
+
+---
+
+## Quick start
+
+```{r, eval=FALSE}
+library(mdeinR)
+
+reviews <- c(
+  "The aroma and presentation were absolutely stunning, a feast for the senses.",
+  "Staff were warm and genuinely caring — we truly felt at home.",
+  "We discovered exotic spices and learned about the history of Moroccan cuisine.",
+  "Nothing particularly noteworthy about the food or the décor."
+)
+```
+
+### Sentence-level scores
+
+```{r, eval=FALSE}
+mde(reviews)
+```
+
+### Document-level aggregate
+
+```{r, eval=FALSE}
+mde_by(reviews)
+```
+
+### Group-level aggregate
+
+```{r, eval=FALSE}
+library(data.table)
+
+restaurant_reviews <- data.table(
+  restaurant = c("A", "A", "B", "B", "B"),
+  text = c(
+    "The aroma and presentation were stunning.",
+    "Staff were caring and we felt at home.",
+    "A truly intellectual adventure through Thai cuisine.",
+    "Nothing special — plain and forgettable.",
+    "The ambiance was gorgeous and the music was delightful."
+  )
+)
+
+mde_by(restaurant_reviews, by = "restaurant")
+```
+
+---
+
+## Using get_sentences() first (recommended for long reviews)
+
+For documents with multiple sentences, pass the `get_sentences()` output to
+`mde()` so that sentence splitting is handled correctly:
+
+```{r, eval=FALSE}
+long_review <- "The food was amazing. Staff were incredibly caring.
+                I discovered dishes I had never heard of before.
+                But the service was not fast enough."
+
+mde(get_sentences(long_review))
+```
+
+---
+
+## Highlighting MDE keywords
+
+`highlight_mde()` wraps matched tokens in XML-style tags for qualitative
+inspection:
+
+```{r, eval=FALSE}
+highlight_mde("The aroma was wonderful and staff were so caring.")
+# [1] "<sensory>aroma</sensory> was wonderful and staff were so <social>caring</social>."
+```
+
+---
+
+## Valence shifters
+
+Negators (`not`, `never`, `don't`, ...), amplifiers (`very`, `extremely`, ...),
+de-amplifiers (`somewhat`, `slightly`, ...), and adversative conjunctions
+(`but`, `however`, ...) are handled automatically via the bundled
+`mdeinR::valence_shifters` table.
+
+You can extend this table with domain-specific terms:
+
+```{r, eval=FALSE}
+custom_vs <- update_valence_shifters(
+  data.frame(
+    x = c("overpriced", "undercooked", "bland"),
+    y = c(1L, 1L, 1L)   # treat as negators
+  )
+)
+
+mde("The food was amazing but overpriced.", valence_shifters_dt = custom_vs)
+```
+
+---
+
+## Inspecting the dictionary
+
+```{r, eval=FALSE}
+# All 324 tokens
+head(mde_dictionary, 10)
+
+# Words per dimension
+table(mde_dictionary$dimension)
+```
+
+---
+
+## Citation
+
+If you use `mdeinR` in your research, please cite:
+
+> Vajpai, G. N., Webb, T., & Beldona, S. (2025). Designing a memorable
+> dining experience lexicon based on theory and text mining.
+> *International Journal of Hospitality Management*, 130, 104245.
+> https://doi.org/10.1016/j.ijhm.2025.104245

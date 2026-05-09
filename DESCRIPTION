@@ -1,0 +1,37 @@
+Package: mdeinR
+Type: Package
+Title: Memorable Dining Experience (MDE) Text Analysis
+Version: 0.1.0
+Authors@R: c(
+    person("Gopi Nath", "Vajpai", email = "gvajpai@udel.edu", role = c("aut", "cre")),
+    person("Timothy", "Webb", email = "twebb@udel.edu", role = "aut"),
+    person("Srikanth", "Beldona", email = "beldona@udel.edu", role = "aut"),
+    person("Tyler W.", "Rinker", role = "ctb",
+           comment = "Scoring algorithm and valence-shifter design derived from sentimentr <https://github.com/trinker/sentimentr>")
+  )
+Description: Provides tools to detect and score the five dimensions of
+    Memorable Dining Experiences (MDE) — sensory, affective, behavioral,
+    social, and intellectual — from free-text restaurant reviews using a
+    theoretically grounded lexicon. Implements sentence-level scoring with
+    valence-shifter (negator/amplifier/de-amplifier/adversative) adjustment,
+    a built-in sentence tokeniser, and a bundled valence-shifter table —
+    all without external NLP dependencies. Based on the lexicon described
+    in Vajpai, Webb & Beldona (2025) <doi:10.1016/j.ijhm.2025.104245>.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 3.5.0)
+Imports:
+    data.table (>= 1.12.0),
+    stringi (>= 1.4.3),
+    methods
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    ggplot2,
+    dplyr
+VignetteBuilder: knitr
+RoxygenNote: 8.0.0
+URL: https://github.com/gvajpai/mdeinR
+BugReports: https://github.com/gvajpai/mdeinR/issues
