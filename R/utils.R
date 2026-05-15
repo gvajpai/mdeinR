@@ -107,18 +107,18 @@ get_sentences <- function(text) {
 
 # ---- Tokeniser --------------------------------------------------------------
 
-## Split a sentence string into lower-case word tokens.
-## If neutral.nonword.check = TRUE, drop tokens with no alphabetic character.
+## Split a sentence string into lower-case word tokens using Unicode-aware
+## regex extraction. This correctly handles punctuation attached to words
+## (e.g. "amazing," "aroma." "beautiful!") which would otherwise fail to
+## match dictionary tokens. Apostrophe contractions are kept intact.
+## The neutral.nonword.check argument is retained for API compatibility
+## but is effectively handled by the regex itself.
 .tokenise <- function(sentence, neutral.nonword.check = TRUE) {
-  words <- stringi::stri_split_regex(
+  out <- stringi::stri_extract_all_regex(
     stringi::stri_trans_tolower(sentence),
-    pattern = "\\s+"
+    "\\p{L}+(?:['\u2019]\\p{L}+)?"
   )[[1L]]
-  words <- words[nchar(words) > 0L]
-  if (neutral.nonword.check) {
-    words <- words[stringi::stri_detect_regex(words, "[a-z]")]
-  }
-  words
+  if (length(out) == 1L && is.na(out)) character(0L) else out
 }
 
 

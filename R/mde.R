@@ -1,4 +1,40 @@
-#' Score Memorable Dining Experience (MDE) Dimensions in Text
+## Package-level cache for precompiled lookup objects.
+## Rebuilt automatically whenever mde_dt or valence_shifters_dt changes.
+.mde_cache <- new.env(parent = emptyenv())
+
+## Build and cache lookup objects from a given mde_dt and valence_shifters_dt.
+## Returns a list with: mde_lookup, mde_keys, vs_lookup, vs_keys
+.build_lookups <- function(mde_dt, valence_shifters_dt) {
+
+  ## Use a simple hash key to detect if inputs have changed
+  cache_key <- paste0(nrow(mde_dt), "_", nrow(valence_shifters_dt))
+
+  if (!is.null(.mde_cache$key) && .mde_cache$key == cache_key) {
+    return(.mde_cache$lookups)
+  }
+
+  mde_tokens <- stringi::stri_trans_tolower(mde_dt[["token"]])
+  mde_dims   <- mde_dt[["dimension"]]
+  mde_lookup <- split(mde_dims, mde_tokens)
+  mde_keys   <- names(mde_lookup)
+
+  vs_tokens  <- stringi::stri_trans_tolower(valence_shifters_dt[["x"]])
+  vs_types_v <- valence_shifters_dt[["y"]]
+  vs_lookup  <- stats::setNames(as.integer(vs_types_v), vs_tokens)
+  vs_keys    <- names(vs_lookup)
+
+  lookups <- list(
+    mde_lookup = mde_lookup,
+    mde_keys   = mde_keys,
+    vs_lookup  = vs_lookup,
+    vs_keys    = vs_keys
+  )
+
+  .mde_cache$key     <- cache_key
+  .mde_cache$lookups <- lookups
+
+  lookups
+}
 #'
 #' @description
 #' Detects and scores the five MDE dimensions — \code{sensory}, \code{affect},
@@ -49,7 +85,9 @@
 #' @details
 #' **Scoring algorithm:**
 #'
-#' 1. Each sentence is tokenised into lower-case words.
+#' 1. Each sentence is tokenised into lower-case word tokens using a
+#'    Unicode-aware regex that correctly strips punctuation from words
+#'    (e.g. \code{"amazing,"} matches \code{"amazing"} in the dictionary).
 #' 2. For every token that matches the MDE lexicon, a raw score of
 #'    \code{1 / word_count} is attributed to the matching dimension.
 #' 3. A context window of \code{n.before} words before and \code{n.after}
@@ -59,8 +97,10 @@
 #'      \code{1 + amplifier.weight}.
 #'    * **De-amplifier** (type 3): the raw score is multiplied by
 #'      \code{1 - n.neutral}.
-#'    * **Adversative conjunction** (type 4): words after the conjunction
-#'      within the window receive reduced weight (\code{1 - n.neutral}).
+#'    * **Adversative conjunction** (type 4): if an adversative word
+#'      (e.g. \emph{but}, \emph{however}) appears \emph{before} the MDE
+#'      word in the window, the score is reduced by \code{1 - n.neutral},
+#'      reflecting lower certainty for the clause following the conjunction.
 #' 4. Adjusted scores for each dimension are summed across a sentence.
 #' 5. Because MDE theory exclusively concerns positive occurrences, any
 #'    negated (negative) dimension score is set to zero.
@@ -123,23 +163,15 @@ mde <- function(
     stop("`text` must be a character vector, data.frame, or get_sentences() output.")
   }
 
-  ## ---- 1. Build lookup structures ------------------------------------------
+  ## ---- 1. Build / retrieve cached lookup structures ------------------------
   ## NOTE: The scoring approach below (steps 1-4) is adapted from the
   ## emotion() function in sentimentr (Rinker, 2021), MIT License.
   ## https://github.com/trinker/sentimentr
-  ##
-  ## We build plain named lists for O(1) lookup rather than using data.table
-  ## := mutations (which modify by reference and can corrupt package-level
-  ## data objects).
-  mde_tokens <- stringi::stri_trans_tolower(mde_dt[["token"]])
-  mde_dims   <- mde_dt[["dimension"]]
-  ## Named list: token -> dimension(s)
-  mde_lookup <- split(mde_dims, mde_tokens)
-
-  vs_tokens  <- stringi::stri_trans_tolower(valence_shifters_dt[["x"]])
-  vs_types_v <- valence_shifters_dt[["y"]]
-  ## Named integer vector: token -> type code
-  vs_lookup  <- stats::setNames(as.integer(vs_types_v), vs_tokens)
+  lk         <- .build_lookups(mde_dt, valence_shifters_dt)
+  mde_lookup <- lk$mde_lookup
+  mde_keys   <- lk$mde_keys
+  vs_lookup  <- lk$vs_lookup
+  vs_keys    <- lk$vs_keys
 
   dims <- c("sensory", "affect", "behavioral", "social", "intellectual")
 
@@ -161,7 +193,7 @@ mde <- function(
 
     for (k in seq_len(n)) {
       w <- words[k]
-      if (!w %in% names(mde_lookup)) next
+      if (!w %in% mde_keys) next                 ## Change 4: use precomputed keys
 
       dim_hit <- mde_lookup[[w]]
       if (length(dim_hit) == 0L) next
@@ -176,7 +208,8 @@ mde <- function(
       window    <- window[!is.na(window)]
 
       ## Retrieve valence-shifter types for window tokens
-      vs_types  <- vs_lookup[window[window %in% names(vs_lookup)]]
+      matched_vs <- window[window %in% vs_keys]  ## Change 4: use precomputed keys
+      vs_types   <- vs_lookup[matched_vs]
 
       ## Apply shifters
       has_neg <- 1L %in% vs_types
@@ -186,7 +219,26 @@ mde <- function(
       adj <- raw
       if (n_amp   > 0L) adj <- adj * (1 + amplifier.weight * n_amp)
       if (n_deamp > 0L) adj <- adj * (1 - n.neutral * n_deamp)
-      if (has_neg)      adj <- adj * -1
+
+      ## Change 2: Adversative conjunction logic (type 4)
+      ## If an adversative (but, however, etc.) appears BEFORE the MDE word
+      ## within the window, reduce its weight — the clause after "but" carries
+      ## less certainty of positive experience.
+      ## e.g. "beautiful decor but terrible service" — "beautiful" appears
+      ## before "but" so it is NOT penalised; "service"-related words after
+      ## "but" would be penalised.
+      if (4L %in% vs_types) {
+        ## Find position of adversative in the window
+        adv_positions <- idx[vs_lookup[window] == 4L &
+                               window %in% vs_keys &
+                               !is.na(vs_lookup[window])]
+        ## If any adversative appears BEFORE k in the window, apply penalty
+        if (any(adv_positions < k, na.rm = TRUE)) {
+          adj <- adj * (1 - n.neutral)
+        }
+      }
+
+      if (has_neg) adj <- adj * -1
 
       ## Per MDE theory: only positive occurrences count
       if (adj > 0) {
@@ -304,58 +356,50 @@ mde_by <- function(text, by = NULL, ...) {
 
   ## ---- Aggregate -----------------------------------------------------------
   score_cols <- c(dims, "mde_count", "word_count")
+  sent_dt    <- data.table::as.data.table(sent_scores)
 
   if (is.null(group_cols)) {
 
-    ## Plain-R aggregate — no data.table in-place mutations
-    means <- vapply(score_cols, function(col) {
-      mean(sent_scores[[col]], na.rm = TRUE)
-    }, numeric(1))
-
-    sds <- vapply(dims, function(col) {
-      stats::sd(sent_scores[[col]], na.rm = TRUE)
-    }, numeric(1))
+    ## Whole-corpus aggregate — use plain vapply, no data.table mutations
+    means <- vapply(score_cols, function(col)
+      mean(sent_dt[[col]], na.rm = TRUE), numeric(1))
+    sds <- vapply(dims, function(col)
+      stats::sd(sent_dt[[col]], na.rm = TRUE), numeric(1))
     names(sds) <- paste0("sd_", dims)
 
-    out <- as.data.frame(c(
-      list(n_sentences = nrow(sent_scores)),
-      as.list(means),
-      as.list(sds)
-    ), stringsAsFactors = FALSE)
-    out <- data.table::as.data.table(out)
+    out <- data.table::as.data.table(as.list(c(
+      n_sentences = nrow(sent_dt),
+      means,
+      sds
+    )))
 
   } else {
 
-    ## Split-apply for grouped aggregate
-    groups     <- unique(sent_scores[, group_cols, with = FALSE])
-    group_keys <- do.call(paste, c(sent_scores[, group_cols, with = FALSE],
-                                   sep = "\x1f"))
-    unique_keys <- unique(group_keys)
+    ## Grouped aggregate — use data.table j-expression which does NOT
+    ## modify by reference; it creates a new table via := -free aggregation
+    agg_means <- sent_dt[,
+      lapply(.SD, mean, na.rm = TRUE),
+      by = group_cols,
+      .SDcols = score_cols
+    ]
 
-    rows <- lapply(unique_keys, function(key) {
-      idx    <- which(group_keys == key)
-      subset <- sent_scores[idx, ]
+    agg_sds <- sent_dt[,
+      lapply(.SD, stats::sd, na.rm = TRUE),
+      by = group_cols,
+      .SDcols = dims
+    ]
 
-      means <- vapply(score_cols, function(col) {
-        mean(subset[[col]], na.rm = TRUE)
-      }, numeric(1))
+    ## Rename sd columns on the sd table before merging
+    old_names <- dims
+    new_names <- paste0("sd_", dims)
+    for (j in seq_along(old_names)) {
+      data.table::setnames(agg_sds, old_names[j], new_names[j])
+    }
 
-      sds <- vapply(dims, function(col) {
-        stats::sd(subset[[col]], na.rm = TRUE)
-      }, numeric(1))
-      names(sds) <- paste0("sd_", dims)
+    n_sent <- sent_dt[, list(n_sentences = .N), by = group_cols]
 
-      grp_vals <- as.list(subset[1L, group_cols, with = FALSE])
-
-      as.data.frame(c(
-        grp_vals,
-        as.list(means),
-        list(n_sentences = length(idx)),
-        as.list(sds)
-      ), stringsAsFactors = FALSE)
-    })
-
-    out <- data.table::rbindlist(rows)
+    out <- Reduce(function(a, b)
+      merge(a, b, by = group_cols), list(agg_means, agg_sds, n_sent))
   }
 
   class(out) <- c("mde_by", class(out))

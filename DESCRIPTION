@@ -1,7 +1,7 @@
 Package: mdeinR
 Type: Package
 Title: Memorable Dining Experience (MDE) Text Analysis
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person("Gopi Nath", "Vajpai", email = "gvajpai@udel.edu", role = c("aut", "cre")),
     person("Timothy", "Webb", email = "twebb@udel.edu", role = "aut"),
@@ -35,4 +35,3 @@ VignetteBuilder: knitr
 RoxygenNote: 8.0.0
 URL: https://github.com/gvajpai/mdeinR
 BugReports: https://github.com/gvajpai/mdeinR/issues
-DOI: 10.5281/zenodo.20215049
