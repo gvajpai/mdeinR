@@ -11,7 +11,7 @@ authors:
     given-names: Srikanth
     email: beldona@udel.edu
 title: "mdeinR: Memorable Dining Experience Text Analysis"
-version: 0.1.0
+version: 0.2.0
 date-released: 2026-05-09
 doi: 10.5281/zenodo.20215049
 url: "https://github.com/gvajpai/mdeinR"
