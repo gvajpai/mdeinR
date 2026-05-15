@@ -313,7 +313,14 @@ mde_by <- function(text, by = NULL, ...) {
              paste(missing_cols, collapse = ", "))
       }
       group_data <- data.table::as.data.table(text)[, by, with = FALSE]
-      text_col   <- names(text)[vapply(text, is.character, logical(1))][1]
+      ## Exclude the grouping columns when searching for the text column
+      non_group_cols <- setdiff(names(text), by)
+      char_cols <- non_group_cols[vapply(
+        data.table::as.data.table(text)[, non_group_cols, with = FALSE],
+        is.character, logical(1)
+      )]
+      if (length(char_cols) == 0L) stop("No text column found in `text` after excluding `by` columns.")
+      text_col <- char_cols[1]
       raw_text   <- text[[text_col]]
     } else if (is.character(text)) {
       if (!is.list(by)) {
@@ -333,7 +340,15 @@ mde_by <- function(text, by = NULL, ...) {
     if (is.character(text)) {
       raw_text <- text
     } else if (inherits(text, c("data.frame", "data.table"))) {
-      text_col <- names(text)[vapply(text, is.character, logical(1))][1]
+      char_cols <- names(text)[vapply(
+        data.table::as.data.table(text), is.character, logical(1)
+      )]
+      if (length(char_cols) == 0L) stop("No character column found in `text`.")
+      ## Pick the longest average string — review text is longer than IDs/labels
+      avg_nchar <- vapply(char_cols, function(col)
+        mean(nchar(as.character(text[[col]]), type = "chars"), na.rm = TRUE),
+        numeric(1))
+      text_col <- char_cols[which.max(avg_nchar)]
       raw_text <- text[[text_col]]
     } else {
       raw_text <- .flatten_get_sentences(text)
