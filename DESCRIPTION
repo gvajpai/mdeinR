@@ -35,3 +35,4 @@ VignetteBuilder: knitr
 RoxygenNote: 8.0.0
 URL: https://github.com/gvajpai/mdeinR
 BugReports: https://github.com/gvajpai/mdeinR/issues
+DOI: 10.5281/zenodo.20215049

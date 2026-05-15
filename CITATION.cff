@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Vajpai
+    given-names: Gopi Nath
+    email: gvajpai@udel.edu
+  - family-names: Webb
+    given-names: Timothy
+    email: twebb@udel.edu
+  - family-names: Beldona
+    given-names: Srikanth
+    email: beldona@udel.edu
+title: "mdeinR: Memorable Dining Experience Text Analysis"
+version: 0.1.0
+date-released: 2026-05-09
+doi: 10.5281/zenodo.20215049
+url: "https://github.com/gvajpai/mdeinR"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.20215049
+    description: Zenodo archive DOI
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Vajpai
+      given-names: Gopi Nath
+    - family-names: Webb
+      given-names: Timothy
+    - family-names: Beldona
+      given-names: Srikanth
+  title: "Designing a memorable dining experience lexicon based on theory and text mining"
+  journal: "International Journal of Hospitality Management"
+  volume: 130
+  year: 2025
+  doi: 10.1016/j.ijhm.2025.104245

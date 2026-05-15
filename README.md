@@ -7,6 +7,7 @@
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/gvajpai/mdeinR/workflows/R-CMD-check/badge.svg)](https://github.com/gvajpai/mdeinR/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20215049.svg)](https://doi.org/10.5281/zenodo.20215049)
 <!-- badges: end -->
 
 `mdeinR` scores the five dimensions of the Memorable Dining Experience
@@ -117,12 +118,20 @@ For each sentence:
 
 ## Citation
 
-If you use `mdeinR` in published research, please cite:
+If you use `mdeinR` in published research, please cite both the paper and the software:
+
+**Paper (lexicon and methodology):**
 
 > Vajpai, G. N., Webb, T., & Beldona, S. (2025). Designing a memorable
 > dining experience lexicon based on theory and text mining.
 > *International Journal of Hospitality Management*, 130, 104245.
 > <https://doi.org/10.1016/j.ijhm.2025.104245>
+
+**Software:**
+
+> Vajpai, G. N., Webb, T., & Beldona, S. (2026). mdeinR: Memorable
+> Dining Experience Text Analysis (v0.1.0). Zenodo.
+> <https://doi.org/10.5281/zenodo.20215049>
 
 BibTeX:
 
@@ -136,6 +145,15 @@ BibTeX:
   pages   = {104245},
   year    = {2025},
   doi     = {10.1016/j.ijhm.2025.104245}
+}
+
+@software{vajpai2026mdeinR,
+  title   = {{mdeinR}: Memorable Dining Experience Text Analysis},
+  author  = {Vajpai, Gopi Nath and Webb, Timothy and Beldona, Srikanth},
+  year    = {2026},
+  version = {0.1.0},
+  doi     = {10.5281/zenodo.20215049},
+  url     = {https://github.com/gvajpai/mdeinR}
 }
 ```
 
