@@ -300,7 +300,7 @@ mde <- function(
 #'
 #' @seealso \code{\link{mde}}
 #' @export
-mde_by <- function(text, by = NULL, ...) {
+mde_by <- function(text, by = NULL, text_col = NULL, ...) {
 
   dims <- c("sensory", "affect", "behavioral", "social", "intellectual")
 
@@ -313,15 +313,24 @@ mde_by <- function(text, by = NULL, ...) {
              paste(missing_cols, collapse = ", "))
       }
       group_data <- data.table::as.data.table(text)[, by, with = FALSE]
-      ## Exclude the grouping columns when searching for the text column
-      non_group_cols <- setdiff(names(text), by)
-      char_cols <- non_group_cols[vapply(
-        data.table::as.data.table(text)[, non_group_cols, with = FALSE],
-        is.character, logical(1)
-      )]
-      if (length(char_cols) == 0L) stop("No text column found in `text` after excluding `by` columns.")
-      text_col <- char_cols[1]
-      raw_text   <- text[[text_col]]
+      ## If text_col is explicitly supplied, use it directly
+      if (!is.null(text_col)) {
+        if (!text_col %in% names(text)) stop("`text_col` '", text_col, "' not found in `text`.")
+        raw_text <- text[[text_col]]
+      } else {
+        ## Auto-detect: exclude grouping columns, then pick longest avg string
+        non_group_cols <- setdiff(names(text), by)
+        char_cols <- non_group_cols[vapply(
+          data.table::as.data.table(text)[, non_group_cols, with = FALSE],
+          is.character, logical(1)
+        )]
+        if (length(char_cols) == 0L) stop("No text column found in `text` after excluding `by` columns.")
+        avg_nchar <- vapply(char_cols, function(col)
+          mean(nchar(as.character(text[[col]]), type = "chars"), na.rm = TRUE),
+          numeric(1))
+        text_col_auto <- char_cols[which.max(avg_nchar)]
+        raw_text <- text[[text_col_auto]]
+      }
     } else if (is.character(text)) {
       if (!is.list(by)) {
         stop("When `text` is a character vector, `by` must be a list of vectors.")
