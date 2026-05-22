@@ -1,4 +1,22 @@
-# mdeinR 0.2.0
+# mdeinR 0.3.0
+
+## New features
+
+* **`restaurant_reviews` sample dataset** — 400 restaurant reviews across
+  eight fictional restaurants, covering all five MDE dimensions and including
+  deliberate examples of negation, amplification, de-amplification, and
+  adversative conjunction effects. Use `head(restaurant_reviews)` to inspect.
+
+* **Rewritten vignette** — `vignette("introduction")` now walks through eight
+  step-by-step examples: basic scoring, each valence-shifter type, full dataset
+  scoring, `mde_by()` grouping, `get_sentences()` splitting, `highlight_mde()`,
+  custom valence shifters, and dictionary inspection. All examples are
+  reproducible using the bundled `restaurant_reviews` dataset.
+
+* **Updated man pages** — `mde()` and `mde_by()` now have fully reproducible
+  examples using `restaurant_reviews` that run without any external data.
+
+
 
 ## Improvements
 

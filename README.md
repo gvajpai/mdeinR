@@ -7,7 +7,7 @@
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/gvajpai/mdeinR/workflows/R-CMD-check/badge.svg)](https://github.com/gvajpai/mdeinR/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://zenodo.org/badge/1233502170.svg)](https://doi.org/10.5281/zenodo.20215048)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20215048.svg)](https://doi.org/10.5281/zenodo.20215048)
 <!-- badges: end -->
 
 `mdeinR` scores the five dimensions of the Memorable Dining Experience
@@ -63,34 +63,47 @@ No external NLP package is required.
 ```r
 library(mdeinR)
 
-reviews <- c(
-  "The aroma and presentation were absolutely stunning, a feast for the senses.",
-  "Staff were warm and genuinely caring — we truly felt at home.",
-  "We discovered exotic spices and learned about the history of Moroccan cuisine.",
-  "Nothing particularly noteworthy about the food or the décor."
-)
+# Built-in sample dataset — 400 reviews across 8 restaurants
+head(restaurant_reviews)
 
-# --- Sentence-level scores ---
-mde(reviews)
+# Sentence-level scores
+mde(restaurant_reviews$text)
 
-# --- Aggregate over the whole corpus ---
-mde_by(reviews)
+# Aggregate by restaurant
+mde_by(restaurant_reviews, by = "restaurant")
 
-# --- Group by restaurant ---
-library(data.table)
-df <- data.table(
-  restaurant = c("A", "A", "B", "B"),
-  text = c(
-    "The aroma was stunning.",
-    "Staff were so caring and warm.",
-    "Very educational — we tried exotic dishes.",
-    "Plain and forgettable food."
-  )
-)
-mde_by(df, by = "restaurant")
+# Aggregate by star rating
+mde_by(restaurant_reviews, by = "stars")
 
-# --- Annotate a single review ---
+# Annotate keywords in a single review
 highlight_mde("The aroma was wonderful and staff were so caring.")
+```
+
+---
+
+## Valence shifters
+
+`mdeinR` handles four types of valence shifters in a context window around
+each matched keyword:
+
+```r
+# Negation — score clamped to zero
+mde(c(
+  "The ambiance was beautiful.",
+  "The ambiance was not beautiful."
+))
+
+# Amplification — score boosted by 1 + 0.8
+mde(c(
+  "The aroma was stunning.",
+  "The aroma was absolutely stunning."
+))
+
+# Adversative — score after 'but' is reduced
+mde(c(
+  "The aroma was stunning and staff were warm.",
+  "The aroma was stunning but staff were warm."
+))
 ```
 
 ---
@@ -99,17 +112,14 @@ highlight_mde("The aroma was wonderful and staff were so caring.")
 
 For each sentence:
 
-1. Tokenise to lower-case words; count *n* words.
-2. For each token matching the MDE dictionary, assign raw score `1 / n`
-   to the matched dimension.
-3. Examine a context window (`n.before = 5`, `n.after = 2`) for
-   valence shifters from `mdeinR::valence_shifters`:
-   - **Negator** (type 1): multiply score by `−1`
+1. Tokenise to lower-case words using Unicode-aware regex (punctuation stripped correctly).
+2. For each token matching the MDE dictionary, assign raw score `1 / n` to the matched dimension.
+3. Examine a context window (`n.before = 5`, `n.after = 2`) for valence shifters from `mdeinR::valence_shifters`:
+   - **Negator** (type 1): multiply score by `−1` → clamped to 0
    - **Amplifier** (type 2): multiply by `1 + amplifier.weight` (default 0.8)
    - **De-amplifier** (type 3): multiply by `1 − n.neutral` (default 0.2)
-   - **Adversative** (type 4): words after the conjunction receive reduced weight
-4. Per MDE theory, negated (negative) scores are set to zero — only
-   positive occurrences count.
+   - **Adversative** (type 4): keyword after conjunction receives reduced weight
+4. Per MDE theory, negated scores are set to zero — only positive occurrences count.
 5. Dimension scores are summed across the sentence.
 
 `mde_by()` averages sentence-level scores within each group.
@@ -130,7 +140,7 @@ If you use `mdeinR` in published research, please cite both the paper and the so
 **Software:**
 
 > Vajpai, G. N., Webb, T., & Beldona, S. (2026). mdeinR: Memorable
-> Dining Experience Text Analysis (v0.2.0). Zenodo.
+> Dining Experience Text Analysis. Zenodo.
 > <https://doi.org/10.5281/zenodo.20215048>
 
 BibTeX:
@@ -151,7 +161,6 @@ BibTeX:
   title   = {{mdeinR}: Memorable Dining Experience Text Analysis},
   author  = {Vajpai, Gopi Nath and Webb, Timothy and Beldona, Srikanth},
   year    = {2026},
-  version = {0.2.0},
   doi     = {10.5281/zenodo.20215048},
   url     = {https://github.com/gvajpai/mdeinR}
 }

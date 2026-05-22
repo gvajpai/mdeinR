@@ -84,6 +84,60 @@
 "valence_shifters"
 
 
+#' Sample Restaurant Reviews
+#'
+#' @description
+#' A sample dataset of 400 restaurant reviews from eight fictional restaurants,
+#' designed to demonstrate the \pkg{mdeinR} package functions. The reviews
+#' cover all five MDE dimensions and include examples of valence-shifter
+#' effects (negation, amplification, de-amplification, and adversative
+#' conjunctions).
+#'
+#' @format A \code{data.table} with 400 rows and 4 columns:
+#' \describe{
+#'   \item{reviewID}{Character. Unique review identifier (e.g. \code{"R0001"}).}
+#'   \item{restaurant}{Character. Restaurant name. One of eight restaurants:
+#'     \emph{Bella Italia}, \emph{The Spice Garden}, \emph{Ocean Blue},
+#'     \emph{The Corner Bistro}, \emph{Sakura Japanese}, \emph{Le Petit Paris},
+#'     \emph{The Grill House}, and \emph{Cafe Mango}.}
+#'   \item{stars}{Integer. Star rating from 1 (lowest) to 5 (highest).}
+#'   \item{text}{Character. The review text.}
+#' }
+#'
+#' @details
+#' The dataset was constructed to provide reproducible, self-contained examples
+#' for all \pkg{mdeinR} documentation. Reviews deliberately include:
+#' \itemize{
+#'   \item High-scoring reviews with clear dimension keywords (sensory, affect,
+#'     behavioral, social, intellectual).
+#'   \item Negated reviews (e.g. \emph{"not amazing"}, \emph{"not warm"}) to
+#'     demonstrate negation handling.
+#'   \item Amplified reviews (\emph{"absolutely stunning"}, \emph{"incredibly
+#'     warm"}) to demonstrate amplifier effects.
+#'   \item De-amplified reviews (\emph{"somewhat appealing"}, \emph{"fairly
+#'     warm"}) to demonstrate de-amplifier effects.
+#'   \item Adversative reviews (\emph{"beautiful but slow"}, \emph{"amazing
+#'     however cold"}) to demonstrate adversative conjunction handling.
+#'   \item Multi-sentence reviews to demonstrate \code{get_sentences()} splitting.
+#' }
+#'
+#' @examples
+#' # Basic inspection
+#' head(restaurant_reviews)
+#' table(restaurant_reviews$stars)
+#' table(restaurant_reviews$restaurant)
+#'
+#' \dontrun{
+#' # Score all reviews
+#' mde(restaurant_reviews$text)
+#'
+#' # Group by restaurant
+#' mde_by(restaurant_reviews, by = "restaurant")
+#' }
+#'
+"restaurant_reviews"
+
+
 #' Update (Merge / Replace) the Valence Shifters Table
 #'
 #' @description

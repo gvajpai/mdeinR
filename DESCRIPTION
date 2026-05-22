@@ -1,7 +1,7 @@
 Package: mdeinR
 Type: Package
 Title: Memorable Dining Experience (MDE) Text Analysis
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: c(
     person("Gopi Nath", "Vajpai", email = "gvajpai@udel.edu", role = c("aut", "cre")),
     person("Timothy", "Webb", email = "twebb@udel.edu", role = "aut"),

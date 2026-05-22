@@ -61,3 +61,20 @@ message("Total: ", nrow(valence_shifters), " tokens")
 
 save(valence_shifters, file = "data/valence_shifters.rda", compress = "bzip2")
 message("valence_shifters saved to data/valence_shifters.rda")
+
+## ---- 3. Build sample restaurant reviews dataset ----------------------------
+reviews_path <- "data-raw/restaurant_reviews.csv"
+if (!file.exists(reviews_path)) {
+  warning("restaurant_reviews.csv not found — skipping sample dataset build.")
+} else {
+  restaurant_reviews <- data.table::fread(
+    reviews_path,
+    colClasses = list(
+      character = c("reviewID", "restaurant", "text"),
+      integer   = "stars"
+    )
+  )
+  message("Sample dataset built: ", nrow(restaurant_reviews), " reviews")
+  save(restaurant_reviews, file = "data/restaurant_reviews.rda", compress = "bzip2")
+  message("restaurant_reviews saved to data/restaurant_reviews.rda")
+}

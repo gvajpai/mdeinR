@@ -27,7 +27,7 @@ mde(
   \item{n.before}{Number of words before a dimension word to scan for valence shifters. Default \code{5}.}
   \item{n.after}{Number of words after a dimension word to scan for valence shifters. Default \code{2}.}
   \item{amplifier.weight}{Multiplicative boost for amplifiers. Default \code{0.8}.}
-  \item{n.neutral}{Fraction toward neutral applied for de-amplifiers. Default \code{0.2}.}
+  \item{n.neutral}{Fraction toward neutral applied for de-amplifiers and adversatives. Default \code{0.2}.}
   \item{neutral.nonword.check}{If \code{TRUE}, punctuation-only tokens are ignored. Default \code{TRUE}.}
   \item{...}{Currently unused.}
 }
@@ -37,6 +37,19 @@ A \code{data.table} with one row per sentence containing columns:
 \code{affect}, \code{behavioral}, \code{social}, \code{intellectual},
 \code{mde_count}.
 }
+\details{
+Scoring algorithm:
+\enumerate{
+  \item Tokenise sentence using Unicode-aware regex (punctuation stripped).
+  \item For each token matching \code{mde_dictionary}, assign raw score \code{1 / word_count}.
+  \item Scan context window for valence shifters: negators flip sign (clamped to 0),
+        amplifiers multiply by \code{1 + amplifier.weight}, de-amplifiers multiply
+        by \code{1 - n.neutral}, adversatives before the keyword reduce by
+        \code{1 - n.neutral}.
+  \item Sum adjusted scores per dimension.
+  \item Negative scores set to 0 (MDE counts positive occurrences only).
+}
+}
 \references{
 Vajpai, G. N., Webb, T., & Beldona, S. (2025). Designing a memorable
 dining experience lexicon based on theory and text mining.
@@ -44,11 +57,27 @@ dining experience lexicon based on theory and text mining.
 \doi{10.1016/j.ijhm.2025.104245}
 }
 \examples{
-\dontrun{
-reviews <- c(
+# Basic scoring
+mde(c(
   "The aroma and presentation were absolutely stunning.",
-  "Staff were warm and genuinely caring."
-)
-mde(reviews)
+  "Staff were warm and genuinely caring.",
+  "The food was not amazing and the service was not attentive."
+))
+
+# Negation: second review scores zero
+mde(c(
+  "The ambiance was beautiful and the staff were warm.",
+  "The ambiance was not beautiful and the staff were not warm."
+))
+
+# Amplification: higher score with amplifier
+mde(c(
+  "The aroma was stunning.",
+  "The aroma was absolutely stunning."
+))
+
+# Using the built-in sample dataset
+\dontrun{
+mde(restaurant_reviews$text)
 }
 }

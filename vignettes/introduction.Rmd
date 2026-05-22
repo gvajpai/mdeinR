@@ -10,37 +10,39 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment  = "#>"
+  comment  = "#>",
+  message  = FALSE,
+  warning  = FALSE
 )
 ```
 
-## Overview
+## What is mdeinR?
 
-`mdeinR` scores the five dimensions of a **Memorable Dining Experience
-(MDE)** — *sensory*, *affect*, *behavioral*, *social*, and *intellectual* —
-from free-text restaurant reviews.
+`mdeinR` measures **Memorable Dining Experiences (MDE)** from free-text
+restaurant reviews. It scores each review sentence across five dimensions:
+
+| Dimension | What it captures |
+|---|---|
+| **sensory** | Aroma, ambiance, visual presentation, texture |
+| **affect** | Emotions — joy, amazement, enchantment |
+| **social** | Warmth, caring, togetherness, celebration |
+| **intellectual** | Curiosity, learning, discovery, knowledge |
+| **behavioral** | Engagement, activities, interactive experiences |
 
 The scoring algorithm is inspired by
-[sentimentr](https://github.com/trinker/sentimentr) by Tyler W. Rinker:
-reviews are split into sentences with the built-in `get_sentences()`;
-every MDE keyword is scored as `1 / sentence_word_count`;
-a context window around each keyword is scanned for valence shifters
-(negators, amplifiers, de-amplifiers, adversative conjunctions) from the
-bundled `valence_shifters` table.
-
-The lexicon (324 words) was developed and validated by Vajpai, Webb &
-Beldona (2025).
+[sentimentr](https://github.com/trinker/sentimentr): each matched keyword
+scores `1 / sentence_word_count`, then a context window adjusts for
+valence shifters (negators, amplifiers, de-amplifiers, adversatives).
 
 ---
 
 ## Installation
 
 ```r
-# Install from GitHub
 devtools::install_github("gvajpai/mdeinR")
 ```
 
-After cloning or installing, build the data objects once:
+After installing, build the data objects once from the package source:
 
 ```r
 source("data-raw/build_dictionary.R")
@@ -48,118 +50,259 @@ source("data-raw/build_dictionary.R")
 
 ---
 
-## Quick start
+## The sample dataset
 
-```{r, eval=FALSE}
+`mdeinR` ships with `restaurant_reviews` — 400 reviews across eight
+fictional restaurants, designed to demonstrate every package feature.
+
+```{r load-data}
 library(mdeinR)
 
-reviews <- c(
-  "The aroma and presentation were absolutely stunning, a feast for the senses.",
-  "Staff were warm and genuinely caring — we truly felt at home.",
-  "We discovered exotic spices and learned about the history of Moroccan cuisine.",
-  "Nothing particularly noteworthy about the food or the décor."
-)
+# Inspect the sample dataset
+head(restaurant_reviews, 4)
 ```
 
-### Sentence-level scores
+```{r data-summary}
+# Star rating distribution
+table(restaurant_reviews$stars)
 
-```{r, eval=FALSE}
-mde(reviews)
+# Reviews per restaurant
+table(restaurant_reviews$restaurant)
 ```
 
-### Document-level aggregate
+---
 
-```{r, eval=FALSE}
-mde_by(reviews)
-```
+## Step 1 — Basic MDE scoring with `mde()`
 
-### Group-level aggregate
+Pass a character vector to `mde()` to get sentence-level scores.
 
-```{r, eval=FALSE}
-library(data.table)
-
-restaurant_reviews <- data.table(
-  restaurant = c("A", "A", "B", "B", "B"),
-  text = c(
-    "The aroma and presentation were stunning.",
-    "Staff were caring and we felt at home.",
-    "A truly intellectual adventure through Thai cuisine.",
-    "Nothing special — plain and forgettable.",
-    "The ambiance was gorgeous and the music was delightful."
-  )
+```{r basic-mde}
+# Score a handful of reviews
+sample_reviews <- c(
+  "The aroma and presentation were absolutely stunning.",
+  "Staff were warm and genuinely caring — we felt completely at home.",
+  "We discovered exotic spices and learned about Moroccan culinary history.",
+  "The tableside performance by the chef was mesmerising and engaging.",
+  "We celebrated our anniversary here and felt truly joyful and special."
 )
 
-mde_by(restaurant_reviews, by = "restaurant")
+mde(sample_reviews)
+```
+
+Each row is one sentence. The scores are `1 / word_count` per matched
+dimension keyword, adjusted by any valence shifters in the context window.
+
+---
+
+## Step 2 — Valence shifters in action
+
+### Negation
+
+A negator (`not`, `never`, `didn't`, etc.) within 5 words before or 2 words
+after a dimension keyword flips its score negative — which is then clamped
+to zero, since MDE theory only counts positive occurrences.
+
+```{r negation}
+# Positive vs. negated versions of the same sentence
+mde(c(
+  "The aroma was stunning and the staff were incredibly warm.",
+  "The aroma was not stunning and the staff were not warm."
+))
+```
+
+Notice how the negated review scores zero — the `not` cancels the
+dimension words.
+
+### Amplification
+
+Amplifiers (`absolutely`, `incredibly`, `extremely`, etc.) multiply the
+raw score by `1 + amplifier.weight` (default 0.8), so an amplified keyword
+scores up to 1.8x more than an unamplified one.
+
+```{r amplification}
+mde(c(
+  "The ambiance was beautiful.",           # base score
+  "The ambiance was absolutely beautiful." # amplified
+))
+```
+
+### De-amplification
+
+De-amplifiers (`somewhat`, `slightly`, `fairly`, etc.) reduce the score by
+`1 - n.neutral` (default 0.2), giving a 20% reduction.
+
+```{r deamplification}
+mde(c(
+  "The ambiance was beautiful.",          # base
+  "The ambiance was somewhat beautiful."  # de-amplified
+))
+```
+
+### Adversative conjunctions
+
+Words like `but` and `however` signal a contrast. When an adversative
+appears **before** a dimension keyword in the context window, the keyword
+receives a reduced score (`1 - n.neutral`), reflecting lower certainty for
+the positive claim following the contrast.
+
+```{r adversative}
+mde(c(
+  "The aroma was stunning and the staff were warm.",   # no adversative
+  "The aroma was stunning but the staff were warm."    # adversative before 'warm'
+))
+```
+
+The `social` score for `warm` is slightly reduced in the second sentence
+because `but` appeared before it.
+
+---
+
+## Step 3 — Scoring the full sample dataset
+
+```{r score-all}
+# Score all 400 reviews — returns one row per sentence
+scores <- mde(restaurant_reviews$text)
+dim(scores)
+head(scores)
+```
+
+```{r score-summary}
+# Average scores across all reviews
+colMeans(scores[, c("sensory", "affect", "behavioral", "social", "intellectual")])
 ```
 
 ---
 
-## Using get_sentences() first (recommended for long reviews)
+## Step 4 — Aggregate by group with `mde_by()`
 
-For documents with multiple sentences, pass the `get_sentences()` output to
-`mde()` so that sentence splitting is handled correctly:
+`mde_by()` averages sentence-level scores within groups. Pass a
+`data.frame` with a `by` column.
 
-```{r, eval=FALSE}
-long_review <- "The food was amazing. Staff were incredibly caring.
-                I discovered dishes I had never heard of before.
-                But the service was not fast enough."
+```{r mde-by-restaurant}
+# Average MDE scores by restaurant
+by_restaurant <- mde_by(restaurant_reviews, by = "restaurant")
+by_restaurant[, .(restaurant, sensory, affect, social, intellectual, behavioral, n_sentences)]
+```
 
-mde(get_sentences(long_review))
+```{r mde-by-stars}
+# Average MDE scores by star rating
+by_stars <- mde_by(restaurant_reviews, by = "stars")
+by_stars[, .(stars, sensory, affect, social, intellectual, behavioral, n_sentences)]
+```
+
+You can also group by multiple columns simultaneously:
+
+```{r mde-by-multi}
+# Group by both restaurant and star rating
+by_both <- mde_by(restaurant_reviews, by = c("restaurant", "stars"))
+head(by_both[, .(restaurant, stars, sensory, affect, social, n_sentences)])
 ```
 
 ---
 
-## Highlighting MDE keywords
+## Step 5 — `get_sentences()` for multi-sentence reviews
 
-`highlight_mde()` wraps matched tokens in XML-style tags for qualitative
-inspection:
+For long reviews with multiple sentences, `get_sentences()` splits them
+first so each sentence is scored independently.
 
-```{r, eval=FALSE}
-highlight_mde("The aroma was wonderful and staff were so caring.")
-# [1] "<sensory>aroma</sensory> was wonderful and staff were so <social>caring</social>."
+```{r get-sentences}
+# A multi-sentence review
+long_review <- "The aroma was absolutely stunning from the moment we entered.
+                Staff were incredibly warm and caring throughout the evening.
+                We learned fascinating techniques from the chef's tableside demonstration.
+                The food was not particularly amazing but the overall experience was joyful."
+
+# Split into sentences
+sents <- get_sentences(long_review)
+print(sents)
+```
+
+```{r score-sentences}
+# Score each sentence
+mde(sents)
+```
+
+Notice that the fourth sentence scores lower — the negator `not` cancels
+`amazing`, and the adversative `but` reduces the `affect` score for `joyful`.
+
+---
+
+## Step 6 — Highlighting dimension keywords
+
+`highlight_mde()` annotates a review with XML-style dimension tags for
+qualitative inspection.
+
+```{r highlight}
+highlight_mde("The aroma was stunning and staff were so warm and caring.")
 ```
 
 ---
 
-## Valence shifters
+## Step 7 — Customising valence shifters
 
-Negators (`not`, `never`, `don't`, ...), amplifiers (`very`, `extremely`, ...),
-de-amplifiers (`somewhat`, `slightly`, ...), and adversative conjunctions
-(`but`, `however`, ...) are handled automatically via the bundled
-`mdeinR::valence_shifters` table.
+Add domain-specific negators or amplifiers with `update_valence_shifters()`.
 
-You can extend this table with domain-specific terms:
-
-```{r, eval=FALSE}
+```{r custom-vs}
+# Add restaurant-specific terms as negators
 custom_vs <- update_valence_shifters(
   data.frame(
-    x = c("overpriced", "undercooked", "bland"),
-    y = c(1L, 1L, 1L)   # treat as negators
+    x = c("overpriced", "undercooked", "bland", "disappointing"),
+    y = c(1L, 1L, 1L, 1L)   # type 1 = negator
   )
 )
 
-mde("The food was amazing but overpriced.", valence_shifters_dt = custom_vs)
+# Compare with and without custom shifters
+mde("The food was amazing but overpriced.",
+    valence_shifters_dt = custom_vs)
+
+mde("The food was amazing but overpriced.")
 ```
 
 ---
 
-## Inspecting the dictionary
+## Step 8 — Inspecting the MDE dictionary
 
-```{r, eval=FALSE}
-# All 324 tokens
-head(mde_dictionary, 10)
-
-# Words per dimension
+```{r dictionary}
+# Number of words per dimension
 table(mde_dictionary$dimension)
+
+# Sample words from each dimension
+head(mde_dictionary[mde_dictionary$dimension == "sensory", ])
+head(mde_dictionary[mde_dictionary$dimension == "intellectual", ])
 ```
+
+---
+
+## Scoring algorithm summary
+
+For each sentence:
+
+1. Tokenise into lower-case words using Unicode-aware regex (punctuation
+   stripped correctly — `"amazing,"` matches `"amazing"`).
+2. For each token matching `mde_dictionary`, assign raw score `1 / n_words`.
+3. Check a context window of 5 words before and 2 words after:
+   - **Negator**: multiply by `-1` → clamped to 0
+   - **Amplifier**: multiply by `1 + 0.8 = 1.8`
+   - **De-amplifier**: multiply by `1 - 0.2 = 0.8`
+   - **Adversative before keyword**: multiply by `0.8`
+4. Sum adjusted scores per dimension across the sentence.
+5. Negative scores set to 0 (MDE counts only positive occurrences).
+
+`mde_by()` averages sentence-level scores within each group.
 
 ---
 
 ## Citation
 
-If you use `mdeinR` in your research, please cite:
-
-> Vajpai, G. N., Webb, T., & Beldona, S. (2025). Designing a memorable
-> dining experience lexicon based on theory and text mining.
-> *International Journal of Hospitality Management*, 130, 104245.
-> https://doi.org/10.1016/j.ijhm.2025.104245
+```bibtex
+@article{vajpai2025mde,
+  title   = {Designing a memorable dining experience lexicon based on
+             theory and text mining},
+  author  = {Vajpai, Gopi Nath and Webb, Timothy and Beldona, Srikanth},
+  journal = {International Journal of Hospitality Management},
+  volume  = {130},
+  pages   = {104245},
+  year    = {2025},
+  doi     = {10.1016/j.ijhm.2025.104245}
+}
+```

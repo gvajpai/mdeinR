@@ -1,26 +1,52 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: "If you use this software, please cite it using the metadata below."
+type: software
+title: "mdeinR: Memorable Dining Experience Text Analysis"
+version: 0.3.0
+date-released: 2026-05-09
+doi: 10.5281/zenodo.20215048
+url: "https://github.com/gvajpai/mdeinR"
+repository-code: "https://github.com/gvajpai/mdeinR"
+license: MIT
 authors:
   - family-names: Vajpai
     given-names: Gopi Nath
     email: gvajpai@udel.edu
+    affiliation: University of Delaware
   - family-names: Webb
     given-names: Timothy
     email: twebb@udel.edu
+    affiliation: University of Delaware
   - family-names: Beldona
     given-names: Srikanth
     email: beldona@udel.edu
-title: "mdeinR: Memorable Dining Experience Text Analysis"
-version: 0.2.0
-date-released: 2026-05-09
-doi: 10.5281/zenodo.20215049
-url: "https://github.com/gvajpai/mdeinR"
+    affiliation: University of Delaware
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.20215049
-    description: Zenodo archive DOI
+    value: 10.5281/zenodo.20215048
+    description: >-
+      Zenodo concept DOI — always resolves to the latest version
+      of the package regardless of version number.
+abstract: >-
+  mdeinR is an R package for detecting and scoring the five dimensions of
+  Memorable Dining Experiences (MDE) — sensory, affect, behavioral, social,
+  and intellectual — from free-text restaurant reviews. It implements
+  sentence-level scoring with valence-shifter adjustment, a built-in
+  sentence tokeniser, and a bundled valence-shifter table, all without
+  external NLP dependencies.
+keywords:
+  - R
+  - text analysis
+  - hospitality
+  - memorable dining experience
+  - natural language processing
+  - restaurant reviews
+  - MDE
 preferred-citation:
   type: article
+  title: >-
+    Designing a memorable dining experience lexicon based on theory
+    and text mining
   authors:
     - family-names: Vajpai
       given-names: Gopi Nath
@@ -28,8 +54,9 @@ preferred-citation:
       given-names: Timothy
     - family-names: Beldona
       given-names: Srikanth
-  title: "Designing a memorable dining experience lexicon based on theory and text mining"
-  journal: "International Journal of Hospitality Management"
+  journal: International Journal of Hospitality Management
   volume: 130
+  pages: "104245"
   year: 2025
   doi: 10.1016/j.ijhm.2025.104245
+  url: "https://doi.org/10.1016/j.ijhm.2025.104245"
