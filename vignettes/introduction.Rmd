@@ -147,13 +147,13 @@ the positive claim following the contrast.
 
 ```{r adversative}
 mde(c(
-  "The aroma was stunning and the staff were warm.",   # no adversative
-  "The aroma was stunning but the staff were warm."    # adversative before 'warm'
+  "The aroma was stunning and the hospitality was caring.",  # no adversative
+  "The aroma was stunning but the hospitality was caring."   # adversative before caring
 ))
 ```
 
-The `social` score for `warm` is slightly reduced in the second sentence
-because `but` appeared before it.
+The `social` score for `caring` is slightly reduced in the second sentence
+because `but` appeared before it. `aroma` and `stunning` are unaffected — they precede `but`.
 
 ---
 

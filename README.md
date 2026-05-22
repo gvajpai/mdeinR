@@ -88,21 +88,30 @@ each matched keyword:
 
 ```r
 # Negation — score clamped to zero
+# 'ambiance' and 'beautiful' are both sensory words
 mde(c(
   "The ambiance was beautiful.",
   "The ambiance was not beautiful."
 ))
 
-# Amplification — score boosted by 1 + 0.8
+# Amplification — score boosted by amplifier.weight (default 0.8)
+# 'absolutely' amplifies 'stunning'
 mde(c(
   "The aroma was stunning.",
   "The aroma was absolutely stunning."
 ))
 
-# Adversative — score after 'but' is reduced
+# De-amplification — score reduced by n.neutral (default 0.2)
+# 'somewhat' de-amplifies 'stunning'
 mde(c(
-  "The aroma was stunning and staff were warm.",
-  "The aroma was stunning but staff were warm."
+  "The aroma was stunning.",
+  "The aroma was somewhat stunning."
+))
+
+# Adversative — 'caring' after 'but' receives a reduced social score
+mde(c(
+  "The aroma was stunning and the hospitality was caring.",
+  "The aroma was stunning but the hospitality was caring."
 ))
 ```
 
